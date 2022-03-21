@@ -1,0 +1,35 @@
+﻿@model Entities.DTOs.PenaltyCalculationDto
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+@if (ViewBag.Error != "" && ViewBag.Error != null)
+                        {
+                            if (ViewBag.Success != true)
+                            {
+                                <div class="row">
+                                    <div class="alert alert-danger">
+                                        <strong>@ViewBag.Error</strong>
+                                    </div>
+
+                                </div>
+                            }
+                        }
+        
+                        <div class = row>
+                            <div class = "col-md-8 offset-2">
+                                @Html.EditorFor(model => model.CheckedOutDate)
+                            </div>
+
+                            <div class = "col-md-8 offset-2">
+                                @Html.EditorFor(model => model.ReturnedDate)
+                            </div>
+
+                            <div class = "col-md-8 offset-2">
+                                @*@Html.DropDownListFor(model => model.CountryId, new SelectList(), "Select Country")*@
+                            </div>
+
+                        </div>
+
+                        
+
