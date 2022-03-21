@@ -1,0 +1,68 @@
+﻿@model Entities.DTOs.PenaltyCalculationDto
+@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+
+@if (ViewBag.Error != "" && ViewBag.Error != null)
+                        {
+                            if (ViewBag.Success != true)
+                            {
+                                <div class="row">
+                                    <div class="alert alert-danger">
+                                        <strong>@ViewBag.Error</strong>
+                                    </div>
+
+                                </div>
+                            }
+                        }
+
+                        @*<form class="form-group" method="post">*@
+                            <div id="formGroup" class = "row">
+                            <div class = "col-md-8 offset-2">
+                                <label>Checked Out Date</label>
+                            <input class="form-control" type="date" id="CheckedOutDate" name="CheckedOutDate" required="required">
+                            </div>
+
+                            <div class = "col-md-8 offset-2">
+                                <label>Return Date</label>
+                                <input class="form-control" type="date" id="ReturnedDate" name="ReturnedDate" required="required">
+                            </div>
+
+                            <div class = "col-md-8 offset-2">
+                                <label>Country</label>
+                                @Html.DropDownListFor(model => model.CountryId, (List<SelectListItem>) ViewBag.Countries, "Select Country", new { @class = "form-control", @required="required"})
+                                </div>
+
+                            <div class = "offset-2" style = "margin-top: 15px;">
+                                <button type="button" id="calculateButton" class="btn-primary btn-info"> Calculate</button>
+                            </div>
+                        </div>                      
+                        
+                        @*</form>*@
+
+                        <div id="partialResult">   
+                            
+                        </div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+ <script type="text/javascript">
+    $(document).ready(function () {
+        $("#calculateButton").click(function () {
+            var checkedOutDate = $('#CheckedOutDate').val();
+            var returnedDate = $('#ReturnedDate').val();
+            var countryId = $('#CountryId').val();
+
+            $.ajax({
+                url: '@Url.Action("Result","Book")',
+                type: 'POST',
+                dataType: 'html',
+                data: { checkedOutDate: checkedOutDate, returnedDate: returnedDate, countryId: countryId},
+                success: function (data) {
+                    $("#partialResult").html(data);
+                },
+                error: function () {
+                    alert("Invalid Parameter.");
+                }
+            });
+        });
+    });
+</script>                       

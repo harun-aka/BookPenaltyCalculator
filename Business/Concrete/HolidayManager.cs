@@ -14,10 +14,10 @@ namespace Business.Concrete
             _holidayDal = holidayDal;
         }
 
-        public IDataResult<List<Holiday>> GetByCountryId(int countryId, DateTime timeIntervalStart, DateTime timeIntervalEnd)
+        public IDataResult<List<Holiday>> GetByCountryIdAndDates(int countryId, DateTime timeIntervalStart, DateTime timeIntervalEnd)
         {
             return new SuccessDataResult<List<Holiday>>(_holidayDal
-                .GetAll(day => day.CountryId == countryId && day.HolidayStart <= timeIntervalEnd && day.HolidayEnd >= timeIntervalStart).OrderBy(day => day.HolidayStart).ToList());
+                .GetAll(day => day.CountryId == countryId && day.StartDate <= timeIntervalEnd && day.EndDate >= timeIntervalStart).OrderBy(day => day.StartDate).ToList());
         }
     }
 }

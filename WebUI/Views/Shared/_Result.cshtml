@@ -1,0 +1,20 @@
+﻿@model Entities.DTOs.CalculatedPenaltyDto
+
+<table class="table">
+    <thead>
+        <tr>
+            <th scope="col">BusinessDays</th>
+            <th scope="col">Penalty</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            @if (Model != null)
+            {
+                <td>@Model.BusinessDays</td>
+                <td>@Model.Penalty @Model.CurrencyCode</td>
+            }
+
+        </tr>
+    </tbody>
+</table>

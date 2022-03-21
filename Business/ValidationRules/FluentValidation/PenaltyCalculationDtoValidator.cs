@@ -12,9 +12,10 @@ namespace Business.ValidationRules.FluentValidation
     {
         public PenaltyCalculationDtoValidator()
         {
-            RuleFor(q => q.CheckedOutDate).NotNull();
-            RuleFor(q => q.ReturnedDate).NotNull();
-            RuleFor(q => q.CountryId).NotNull();
+            RuleFor(pc => pc.CheckedOutDate).NotNull();
+            RuleFor(pc => pc.ReturnedDate).NotNull();
+            RuleFor(pc => pc.CountryId).NotNull();
         }
+
     }
 }

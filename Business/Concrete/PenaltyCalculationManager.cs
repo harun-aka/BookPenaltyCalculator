@@ -1,6 +1,7 @@
 ﻿using Business.Abstract;
 using Business.Constants;
 using Business.ValidationRules.FluentValidation;
+using Core.Aspects.Autofac.Transaction;
 using Core.Aspects.Autofac.Validation;
 using Core.Utilities.Business;
 using Core.Utilities.Results;
@@ -12,26 +13,26 @@ namespace Business.Concrete
     public class PenaltyCalculationManager : IPenaltyCalculationService
     {
         ICountryService _countryService;
-        ICurrencyService _currencyService;
-        IHolidayService _nonBusinessDayService;
+        IHolidayService _holidayService;
 
-        public PenaltyCalculationManager(ICountryService countryService, ICurrencyService currencyService, IHolidayService nonBusinessDayService)
+        public PenaltyCalculationManager(ICountryService countryService, IHolidayService holidayService)
         {
             _countryService = countryService;
-            _currencyService = currencyService;
-            _nonBusinessDayService = nonBusinessDayService;
+            _holidayService = holidayService;
         }
 
         [ValidationAspect(typeof(PenaltyCalculationDtoValidator))]
+        [TransactionScopeAspect()]
         public IDataResult<CalculatedPenaltyDto> CalculatePenalty(PenaltyCalculationDto penaltyCalculationDto)
         {
-            IDataResult<List<Holiday>> resultholidayList = _nonBusinessDayService.GetByCountryId(penaltyCalculationDto.CountryId, penaltyCalculationDto.CheckedOutDate, penaltyCalculationDto.ReturnedDate);
+            //Get Holiday List Country Id
+            IDataResult<List<Holiday>> resultholidayList = _holidayService.GetByCountryIdAndDates(penaltyCalculationDto.CountryId, penaltyCalculationDto.CheckedOutDate, penaltyCalculationDto.ReturnedDate);
             if(resultholidayList == null)
             {
-                return new ErrorDataResult<CalculatedPenaltyDto>(Messages.NonBusinesDaysNotFound);
+                return new ErrorDataResult<CalculatedPenaltyDto>(Messages.HolidayNotFound);
             }
+            List<Holiday> holidayList = resultholidayList.Data;
 
-            List<Holiday> nonBusinessDayList = resultholidayList.Data;
 
             IDataResult<CountryCurrencyDto> resultCountryCurrencyDto = _countryService.GetCountryCurrenyByCountryId(penaltyCalculationDto.CountryId);
             if(!resultCountryCurrencyDto.Success)
@@ -41,11 +42,12 @@ namespace Business.Concrete
 
             CountryCurrencyDto countryCurrencyDto = resultCountryCurrencyDto.Data;
 
+            //If date is not in weekend or not in holiday list, the date is a business day. 
             int businessDays = 0;
-            for (DateTime date = penaltyCalculationDto.CheckedOutDate; date < penaltyCalculationDto.CheckedOutDate; date.AddDays(1))
+            for (DateTime date = penaltyCalculationDto.CheckedOutDate; date < penaltyCalculationDto.ReturnedDate; date = date.AddDays(1))
             {
-                IResult result = BusinessRules.Run(CheckIfDateNotInWeekend(countryCurrencyDto, date), CheckIfDateNotInHolidayList(nonBusinessDayList, date));
-                if(!result.Success)
+                IResult result = BusinessRules.Run(CheckIfDateNotInWeekend(countryCurrencyDto, date), CheckIfDateNotInHolidayList(holidayList, date));
+                if(result != null)
                 {
                     continue;
                 }
@@ -63,6 +65,7 @@ namespace Business.Concrete
             });
         }
 
+        //Checks The Date, FirstWeekendDayOfWeek and SecondWeekendDayOfWeek weekend days of the country
         private static IResult CheckIfDateNotInWeekend(CountryCurrencyDto countryCurrencyDto, DateTime date)
         {
             if(date.DayOfWeek == countryCurrencyDto.FirstWeekendDayOfWeek || date.DayOfWeek == countryCurrencyDto.SecondWeekendDayOfWeek)
@@ -74,6 +77,7 @@ namespace Business.Concrete
 
         private static decimal CalculatePenaltyAmount(int businessDays, decimal currencyValue)
         {
+            // Magic Numbers 
             int dailyPenaltyAmount = 5;
             int lateDays = businessDays - 10;
             if (lateDays <= 0)
@@ -81,14 +85,16 @@ namespace Business.Concrete
                 return decimal.Zero;
             }
 
+            //Currency is dollar indexed. The other currency values added according to dollar.
             return currencyValue * lateDays * dailyPenaltyAmount;
         }
 
+        //Checks The Date, Holiday of the country
         private static IResult CheckIfDateNotInHolidayList(List<Holiday> holidayList, DateTime date)
         {
             foreach (var day in holidayList)
             {
-                if (day.HolidayStart <= date && day.HolidayEnd >= date)
+                if (day.StartDate <= date && day.EndDate >= date)
                 {
                     return new ErrorResult();
                 }

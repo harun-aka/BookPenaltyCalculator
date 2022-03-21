@@ -5,6 +5,6 @@ namespace Business.Abstract
 {
     public interface IHolidayService
     {
-        IDataResult<List<Holiday>> GetByCountryId(int countryId, DateTime timeIntervalStart, DateTime timeIntervalEnd);
+        IDataResult<List<Holiday>> GetByCountryIdAndDates(int countryId, DateTime timeIntervalStart, DateTime timeIntervalEnd);
     }
 }

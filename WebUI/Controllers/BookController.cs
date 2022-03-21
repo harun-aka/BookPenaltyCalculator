@@ -4,6 +4,7 @@ using Core.Utilities.Results;
 using Entities.Concrete;
 using Entities.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace WebUI.Controllers
 {
@@ -11,6 +12,7 @@ namespace WebUI.Controllers
     {
         IPenaltyCalculationService _penaltyCalculationService;
         ICountryService _countryService;
+
         public BookController(IPenaltyCalculationService penaltyCalculationService, ICountryService countryService)
         {
             _penaltyCalculationService = penaltyCalculationService;
@@ -20,34 +22,33 @@ namespace WebUI.Controllers
         public IActionResult Index()
         {
             IDataResult<List<Country>> result = _countryService.GetAll();
-            if (result == null)
+            if (result != null)
             {
-                ViewBag.Error = "Failed" + Messages.CountriesReturnedNull;
+                List<SelectListItem> countries = (from country in result.Data
+                                                  select new SelectListItem
+                                                  {
+                                                      Text = country.Name,
+                                                      Value = country.Id.ToString()
+                                                  }
+                                                  ).ToList();
+                ViewBag.Countries = countries;
             }
             return View();
         }
 
-        public IActionResult CalculatePenalty(PenaltyCalculationDto penaltyCalculationDto)
+        [HttpPost]
+        public IActionResult Result(PenaltyCalculationDto penaltyCalculationDto)
         {
             IDataResult<CalculatedPenaltyDto> result = _penaltyCalculationService.CalculatePenalty(penaltyCalculationDto);
-            if(!result.Success)
+            if (!result.Success)
             {
                 ViewBag.Error = "Failed" + result.Message;
                 return View("Index");
             }
 
-            return View(result.Data);
+            result.Data.Penalty = Math.Round(result.Data.Penalty, 2);
+            return PartialView("_Result", result.Data);
         }
 
-        [HttpPost]
-        public JsonResult GetCountries()
-        {
-            IDataResult<List<Country>> result = _countryService.GetAll();
-            if(result == null)
-            {
-                return new JsonResult(new { data = "null" });
-            }
-            return new JsonResult(new { data = result.Data });
-        }
     }
 }
